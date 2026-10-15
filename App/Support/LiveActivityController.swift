@@ -40,8 +40,7 @@ enum LiveActivityController {
         do {
             _ = try Activity.request(
                 attributes: CountdownActivityAttributes(countdownID: countdown.id),
-                content: content,
-                pushType: nil
+                content: content
             )
             return nil
         } catch {

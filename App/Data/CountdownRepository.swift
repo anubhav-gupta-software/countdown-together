@@ -161,7 +161,9 @@ final class CountdownRepository {
         database.countdowns.append(countdown)
         persist()
         await afterLocalChange()
-        await push(countdown)
+        if let message = await push(countdown) {
+            lastSyncMessage = message
+        }
         return countdown.id
     }
 
@@ -187,7 +189,9 @@ final class CountdownRepository {
         database.countdowns[index] = countdown
         persist()
         await afterLocalChange()
-        await push(countdown)
+        if let message = await push(countdown) {
+            lastSyncMessage = message
+        }
     }
 
     func setLiveActivityMode(_ mode: LiveActivityMode, for id: UUID) async {
@@ -199,7 +203,9 @@ final class CountdownRepository {
         if let warning = await LiveActivityController.reconcile(database.countdowns) {
             lastSyncMessage = warning
         }
-        await push(countdown)
+        if let message = await push(countdown) {
+            lastSyncMessage = message
+        }
     }
 
     func delete(_ id: UUID) async {
@@ -269,7 +275,9 @@ final class CountdownRepository {
         openedCountdownID = countdown.id
         persist()
         await afterLocalChange()
-        await push(countdown)
+        if let message = await push(countdown) {
+            lastSyncMessage = message
+        }
         return countdown.id
     }
 
@@ -357,8 +365,14 @@ final class CountdownRepository {
         guard !inserted.isEmpty else { return }
         persist()
         await afterLocalChange()
+        var failure: String?
         for countdown in inserted {
-            await push(countdown)
+            if let message = await push(countdown) {
+                failure = failure ?? message
+            }
+        }
+        if let failure {
+            lastSyncMessage = failure
         }
     }
 
@@ -381,13 +395,23 @@ final class CountdownRepository {
             lastSyncMessage = nil
             return
         }
+        var failure: String?
         for countdown in database.countdowns {
-            await push(countdown)
+            if let message = await push(countdown) {
+                failure = failure ?? message
+            }
+        }
+        if let failure {
+            lastSyncMessage = failure
+        } else if !database.countdowns.isEmpty {
+            lastSyncMessage = "Synced."
+        } else {
+            lastSyncMessage = nil
         }
     }
 
-    private func push(_ countdown: Countdown) async {
-        guard database.profile.syncMode != .local else { return }
+    private func push(_ countdown: Countdown) async -> String? {
+        guard database.profile.syncMode != .local else { return nil }
         do {
             let backend = try makeBackend()
             let canonical = try await backend.push(makePayload(for: countdown))
@@ -395,8 +419,9 @@ final class CountdownRepository {
                 upsert(adopt(canonical))
                 persist()
             }
+            return nil
         } catch {
-            lastSyncMessage = error.localizedDescription
+            return error.localizedDescription
         }
     }
 

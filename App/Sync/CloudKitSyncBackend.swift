@@ -65,19 +65,19 @@ struct CloudKitSyncBackend: SyncBackend {
     private func record(from payload: SyncPayload, photoFile: URL?, recordID: CKRecord.ID) -> CKRecord {
         let record = CKRecord(recordType: "Countdown", recordID: recordID)
         let countdown = payload.countdown
-        record["countdownID"] = countdown.id.uuidString as NSString
-        record["title"] = countdown.title as NSString
-        record["targetDate"] = countdown.targetDate as NSDate
-        record["kind"] = countdown.kind.rawValue as NSString
-        record["theme"] = countdown.theme.rawValue as NSString
-        record["note"] = countdown.note as NSString
-        record["ownerName"] = countdown.ownerName as NSString
-        record["partnerName"] = (countdown.partnerName ?? "") as NSString
-        record["createdAt"] = countdown.createdAt as NSDate
-        record["updatedAt"] = countdown.updatedAt as NSDate
-        record["liveActivityMode"] = countdown.liveActivityMode.rawValue as NSString
+        record.setObject(countdown.id.uuidString as NSString, forKey: "countdownID")
+        record.setObject(countdown.title as NSString, forKey: "title")
+        record.setObject(countdown.targetDate as NSDate, forKey: "targetDate")
+        record.setObject(countdown.kind.rawValue as NSString, forKey: "kind")
+        record.setObject(countdown.theme.rawValue as NSString, forKey: "theme")
+        record.setObject(countdown.note as NSString, forKey: "note")
+        record.setObject(countdown.ownerName as NSString, forKey: "ownerName")
+        record.setObject((countdown.partnerName ?? "") as NSString, forKey: "partnerName")
+        record.setObject(countdown.createdAt as NSDate, forKey: "createdAt")
+        record.setObject(countdown.updatedAt as NSDate, forKey: "updatedAt")
+        record.setObject(countdown.liveActivityMode.rawValue as NSString, forKey: "liveActivityMode")
         if let photoFile {
-            record["photo"] = CKAsset(fileURL: photoFile)
+            record.setObject(CKAsset(fileURL: photoFile), forKey: "photo")
         }
         return record
     }
